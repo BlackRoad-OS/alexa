@@ -1,0 +1,16 @@
+# Alexa – BlackRoad OS routing configuration
+# All @ mentions listed under `ollama_triggers` are routed to the local
+# Ollama instance.  No external AI provider is contacted.
+
+ollama:
+  base_url: "http://localhost:11434"
+  default_model: "llama3"
+  timeout: 120          # seconds
+
+# Every mention listed here (case-insensitive) is treated as an Ollama trigger.
+# Add or remove aliases as needed.
+ollama_triggers:
+  - "@ollama"
+  - "@copilot."
+  - "@lucidia"
+  - "@blackboxprogramming."
