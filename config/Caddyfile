@@ -1,0 +1,14 @@
+# Caddyfile — BlackRoad API Gateway
+# Serves inside the Tailscale mesh on the MagicDNS name api.blackroad.internal
+
+api.blackroad.internal {
+    reverse_proxy litellm:4000
+    tls internal
+}
+
+# Authentik is exposed publicly via Cloudflare Tunnel — this block handles
+# requests arriving through the tunnel on the local loopback interface only.
+# Direct network access to port 9000 is blocked at the firewall.
+127.0.0.1:9000 {
+    reverse_proxy authentik-server:9000
+}

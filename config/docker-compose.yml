@@ -1,0 +1,100 @@
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4000:4000"
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    env_file:
+      - ../.env
+    depends_on:
+      - litellm-db
+
+  litellm-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - litellm_db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${LITELLM_DB_PASS}
+
+  authentik-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - authentik_db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: ${PG_PASS}
+
+  authentik-redis:
+    image: redis:alpine
+    restart: unless-stopped
+    command: --save 60 1 --loglevel warning
+    volumes:
+      - authentik_redis:/data
+
+  authentik-server:
+    image: ghcr.io/goauthentik/server:2024.12
+    restart: unless-stopped
+    command: server
+    environment:
+      AUTHENTIK_REDIS__HOST: authentik-redis
+      AUTHENTIK_POSTGRESQL__HOST: authentik-db
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - authentik_media:/media
+      - authentik_templates:/templates
+    depends_on:
+      - authentik-db
+      - authentik-redis
+
+  authentik-worker:
+    image: ghcr.io/goauthentik/server:2024.12
+    restart: unless-stopped
+    command: worker
+    environment:
+      AUTHENTIK_REDIS__HOST: authentik-redis
+      AUTHENTIK_POSTGRESQL__HOST: authentik-db
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+    volumes:
+      - authentik_media:/media
+      - authentik_certs:/certs
+      - authentik_templates:/templates
+    depends_on:
+      - authentik-db
+      - authentik-redis
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  litellm_db:
+  authentik_db:
+  authentik_redis:
+  authentik_media:
+  authentik_certs:
+  authentik_templates:
+  caddy_data:
+  caddy_config:

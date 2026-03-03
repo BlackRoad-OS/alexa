@@ -1,0 +1,11 @@
+# Environment secrets — never commit
+.env
+config/.env
+
+# Cloudflared credentials
+*.json
+**/.cloudflared/
+
+# OS files
+.DS_Store
+Thumbs.db
