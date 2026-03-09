@@ -1,0 +1,42 @@
+model_list:
+  # ── Blackbox AI (primary preferred provider) ──────────────────────────────
+  - model_name: blackboxai
+    litellm_params:
+      model: openai/blackboxai
+      api_base: https://api.blackbox.ai/v1
+      api_key: os.environ/BLACKBOXAI_API_KEY
+
+  # ── OpenAI (accessible via gateway only) ─────────────────────────────────
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  # ── Anthropic (accessible via gateway only) ───────────────────────────────
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/LITELLM_DATABASE_URL
+  store_model_in_db: true
+  # All requests are authenticated — no anonymous access
+  enforced_params:
+    - api_key
+
+router_settings:
+  routing_strategy: least-busy
+  num_retries: 3
+  timeout: 60
+
+litellm_settings:
+  # Log all requests locally — nothing is sent externally
+  store_prompts_in_spend_logs: true
+  redact_user_api_key_info: false
